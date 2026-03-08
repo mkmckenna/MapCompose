@@ -442,6 +442,14 @@ val MapState.fullSize: IntSize
     get() = IntSize(zoomPanRotateState.fullWidth, zoomPanRotateState.fullHeight)
 
 /**
+ * Returns the level, an entire value belonging to [0 ; levelCount - 1], where `levelCount` is the
+ * count of levels passed at [MapState] constructor.
+ */
+fun MapState.getLevelAtScale(scale: Double): Int {
+    return visibleTilesResolver.getLevel(scale)
+}
+
+/**
  * Stops all currently running animations. If other animations are scheduled to run (inside running
  * coroutines), you might have to cancel those coroutines as well.
  */
@@ -599,12 +607,13 @@ internal val visibleAreaMutex = Mutex()
 internal var visibleArea: VisibleArea? = null
 
 /**
- * Returns a flow which emits [Unit] whenever the viewport changes.
+ * Returns a flow which emits [MapState] whenever the viewport changes.
+ * It's a flow equivalent of [setStateChangeListener].
  */
-suspend fun MapState.viewportChangeFlow(): Flow<Unit> {
+fun MapState.viewportChangeFlow(): Flow<MapState> {
     return snapshotFlow {
-        centroidX.hashCode() + centroidY.hashCode() + scale.hashCode()
-    }
+        centroidX.hashCode() + centroidY.hashCode() + scale.hashCode() + rotation.hashCode()
+    }.map { this }
 }
 
 /**
