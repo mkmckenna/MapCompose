@@ -42,6 +42,7 @@ import ovh.plrapps.mapcompose.utils.map
 import ovh.plrapps.mapcompose.utils.throttle
 import java.util.UUID
 import kotlin.math.abs
+import kotlin.math.absoluteValue
 import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.pow
@@ -540,5 +541,23 @@ private data class Cluster(
     val y: Double,
     val markers: List<Marker>
 ) : Placeable {
-    val id = clusterIdPrefix + markers.map { it.id }.sorted()
+    val id = buildString {
+        append(clusterIdPrefix)
+
+        /* Now we produce a hash based on the ids of the markers, and this hash *does not* depend
+         * on the order of the markers. */
+        val hashes = LongArray(markers.size)
+        for (i in markers.indices) {
+            hashes[i] = markers[i].id.hashCode().toLong()
+        }
+
+        hashes.sort()
+
+        var h = 0L
+        for (value in hashes) {
+            h = 31 * h + value
+        }
+
+        append(h.absoluteValue.toString(16))
+    }
 }
